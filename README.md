@@ -1,6 +1,6 @@
 # Node-Omxplayer
 
-A library for controlling the Raspberry Pi [omxplayer](https://github.com/popcornmix/omxplayer) from Node.js.
+A fork of the [node-omxplayer](https://github.com/Ap0c/node-omxplayer) in order to provide finer grained control over omxplayer.
 
 ## Get Started
 
