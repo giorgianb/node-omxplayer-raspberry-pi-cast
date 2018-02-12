@@ -11,5 +11,8 @@
   "repository": {
     "type": "git",
     "url": "https://gitlab.com/raspberry-pi-cast/node-omxplayer-raspberry-pi-cast"
+  },
+  "dependencies": {
+    "dbus-native": "^0.2.5"
   }
 }
