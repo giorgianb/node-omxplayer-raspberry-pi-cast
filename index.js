@@ -43,7 +43,7 @@ function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
 }
 
 /* TODO: Once class is migrated to D-Bus and well tested, rename to OMXPlayer */
-class Omx extends EventEmitter {
+class OMXPlayer extends EventEmitter {
   constructor(source, givenOutput, loop, initalVolume, showOsd) {
     super();
     let player = null
@@ -116,10 +116,10 @@ class Omx extends EventEmitter {
     this.decSubDelay = () => { writeStdin('d'); };
     this.incSubDelay = () => { writeStdin('f'); };
 
-    Object.defineProperty(omxplayer, 'running', {
+    Object.defineProperty(this, 'running', {
       get: () => { return open; }
     });
   }
 }
 
-module.exports = Omx;
+module.exports = OMXPlayer;
