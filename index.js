@@ -42,9 +42,8 @@ function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
 	return args;
 }
 
-/* TODO: Once class is migrated to D-Bus and well tested, rename to OMXPlayer */
 class OMXPlayer extends EventEmitter {
-  constructor(source, givenOutput, loop, initalVolume, showOsd) {
+  constructor(source, output, loop, initialVolume, showOsd) {
     super();
     let player = null
     let open = false
@@ -119,6 +118,9 @@ class OMXPlayer extends EventEmitter {
     Object.defineProperty(this, 'running', {
       get: () => { return open; }
     });
+
+    if (source)
+      player = spawnPlayer(source, output, loop, initialVolume, showOsd);
   }
 }
 
