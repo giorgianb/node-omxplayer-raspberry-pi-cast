@@ -45,6 +45,7 @@ function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
 /* TODO: Once class is migrated to D-Bus and well tested, rename to OMXPlayer */
 class Omx extends EventEmitter {
   constructor(source, givenOutput, loop, initalVolume, showOsd) {
+    super();
     let player = null
     let open = false
 
