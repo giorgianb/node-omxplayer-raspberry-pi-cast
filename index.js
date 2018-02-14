@@ -29,7 +29,7 @@ function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
 	let args = [
     source, 
     '-o',  output,
-    --blank', 
+    '--blank', 
     osd ? '' : '--no-osd', '
     '--dbus_name', OMXPLAYER_DBUS_DESTINATION
   ];
