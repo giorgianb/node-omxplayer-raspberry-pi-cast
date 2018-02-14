@@ -1,14 +1,14 @@
 'use strict';
 const EventEmitter = require('events');
 const spawn = require('child_process').spawn;
-
+/*
 const dbus = require('dbus-native');
 const conn = dbus.createConnection();
 const OMXPLAYER_DBUS_PATH = '/org/mpris/MediaPlayer2';
 const OMXPLAYER_DBUS_DESTINATION = 'org.mpris.MediaPlayer2.omxplayer';
 const OMXPLAYER_DBUS_PROPERTIES_INTERFACE = 'org.freedesktop.DBus.Properties';
 const OMXPLAYER_DBUS_PLAYER_INTERFACE = 'org.freedesktop.MediaPlayer2.Player';
-
+*/
 function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
   const ALLOWED_OUTPUTS = ['hdmi', 'local', 'both', 'alsa'];
 	let output = '';
