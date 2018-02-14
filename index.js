@@ -30,7 +30,7 @@ function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
     source, 
     '-o',  output,
     '--blank', 
-    osd ? '' : '--no-osd', '
+    osd ? '' : '--no-osd', '',
     '--dbus_name', OMXPLAYER_DBUS_DESTINATION
   ];
 
@@ -56,7 +56,7 @@ class OMXPlayer extends EventEmitter {
   }
 
   /* Public Methods */
-  function newSource(src, out, loop, initialVolume, showOsd) {
+  newSource(src, out, loop, initialVolume, showOsd) {
     if (this._omxplayer_open) {
       this._omxplayer_player.on('close', () => { 
         this._omxplayer_spawnPlayer(src, out, loop, initialVolume, showOsd); 
@@ -68,95 +68,95 @@ class OMXPlayer extends EventEmitter {
       this._omxplayer_spawnPlayer(src, out, loop, initialVolume, showOsd);
   };
 
-  function play() { 
+  play() { 
     this._omxplayer_writeStdin('p'); 
   }
 
-  function pause() { 
+  pause() { 
     this._omxplayer_writeStdin('p'); 
   }
 
-  function volUp() { 
+  volUp() { 
     this._omxplayer_writeStdin('+'); 
   }
 
-  function volDown() { 
+  volDown() { 
     this._omxplayer_writeStdin('-'); 
   }
 
-  function fastFwd() { 
+  fastFwd() { 
     this._omxplayer_writeStdin('>'); 
   }
 
-  function rewind() { 
+  rewind() { 
     this._omxplayer_writeStdin('<'); 
   }
 
-  function fwd30 =() { 
+  fwd30() { 
     this._omxplayer_writeStdin('\u001b[C'); 
   }
 
-  function back30() { 
+  back30() { 
     this._omxplayer_writeStdin('\u001b[D'); 
   }
 
-  function fwd600() { 
+  fwd600() { 
     this._omxplayer_writeStdin('\u001b[A'); 
   }
 
-  function back600() { 
+  back600() { 
     this._omxplayer_writeStdin('\u001b[B'); 
   }
 
-  function quit() { 
+  quit() { 
     this._omxplayer_writeStdin('q'); 
   }
 
-  function subtitles() { 
+  subtitles() { 
     this._omxplayer_writeStdin('s'); 
   }
 
-  function info() { 
+  info() { 
     this._omxplayer_writeStdin('z'); 
   }
 
-  function incSpeed() { 
+  incSpeed() { 
     this._omxplayer_writeStdin('1'); 
   }
 
-  function decSpeed() { 
+  decSpeed() { 
     this._omxplayer_writeStdin('2'); 
   }
 
-  function prevChapter() { 
+  prevChapter() { 
     this._omxplayer_writeStdin('i'); 
   }
 
-  function nextChapter() { 
+  nextChapter() { 
     this._omxplayer_writeStdin('o'); 
   }
 
-  function prevAudio() { 
+  prevAudio() { 
     this._omxplayer_writeStdin('j'); 
   }
 
-  function nextAudio() { 
+  nextAudio() { 
     this._omxplayer_writeStdin('k'); 
   }
 
-  function prevSubtitle() { 
+  prevSubtitle() { 
     this._omxplayer_writeStdin('n'); 
   }
 
-  function nextSubtitle() { 
+  nextSubtitle() { 
     this._omxplayer_writeStdin('m'); 
   }
 
-  function decSubDelay() { 
+  decSubDelay() { 
     this._omxplayer_writeStdin('d'); 
   }
 
-  function incSubDelay() { 
+  incSubDelay() { 
     this._omxplayer_writeStdin('f'); 
   }
 
@@ -165,7 +165,7 @@ class OMXPlayer extends EventEmitter {
   }
 
   /* Private Methods */
-  function _omxplayer_spawnPlayer(source, output, loop, initialVolume, showOsd) {
+  _omxplayer_spawnPlayer(source, output, loop, initialVolume, showOsd) {
     let args = buildArgs(src, out, loop, initialVolume, showOsd);
     let omxProcess = spawn('omxplayer', args);
     this._omxplayer_open = true;
@@ -180,19 +180,19 @@ class OMXPlayer extends EventEmitter {
     this._omxplayer_player = omxProcess;
   }
 
-  function _omxplayer_writeStdin(value) {
+  _omxplayer_writeStdin(value) {
     if (this._omxplayer_open)
       this._omxplayer_player.stdin.write(value);
     else
       throw new Error('Player is closed.');
   }
 
-  function _omxplayer_updateStatus() {
+  _omxplayer_updateStatus() {
     this._omxplayer_open = false
     this.emit('close')
   }
 
-  function _omxplayer_emitError() {
+  _omxplayer_emitError() {
     this._omxplayer_open = false
     this.emit('close')
   }
