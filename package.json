@@ -13,6 +13,7 @@
     "url": "https://gitlab.com/raspberry-pi-cast/node-omxplayer-raspberry-pi-cast"
   },
   "dependencies": {
-    "dbus-native": "^0.2.5"
+    "dbus-native": "^0.2.5",
+    "username": "^3.0.0"
   }
 }

@@ -1,14 +1,18 @@
 'use strict';
 const EventEmitter = require('events');
 const spawn = require('child_process').spawn;
-/*
 const dbus = require('dbus-native');
-const conn = dbus.createConnection();
+const fs = require('fs');
+const username = require('username');
+
 const OMXPLAYER_DBUS_PATH = '/org/mpris/MediaPlayer2';
 const OMXPLAYER_DBUS_DESTINATION = 'org.mpris.MediaPlayer2.omxplayer';
 const OMXPLAYER_DBUS_PROPERTIES_INTERFACE = 'org.freedesktop.DBus.Properties';
 const OMXPLAYER_DBUS_PLAYER_INTERFACE = 'org.freedesktop.MediaPlayer2.Player';
-*/
+
+const OMXPLAYER_DBUS_ADDRESS_DIR = "/tmp/";
+const OMXPLAYER_DBUS_ADDRESS_FILE = "omxplayer." + username.sync();
+
 function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
   const ALLOWED_OUTPUTS = ['hdmi', 'local', 'both', 'alsa'];
 	let output = '';
@@ -66,76 +70,124 @@ class OMXPlayer extends EventEmitter {
       this._omxplayer_writeStdin('q');
     } else
       this._omxplayer_spawnPlayer(src, out, loop, initialVolume, showOsd);
-  };
-
-  play() { 
-    this._omxplayer_writeStdin('p'); 
   }
 
-  pause() { 
-    this._omxplayer_writeStdin('p'); 
+  play(callback) { 
+//    this._omxplayer_writeStdin('p'); 
+    this._omxplayer_dbus_player.Play(callback);
   }
 
-  volUp() { 
-    this._omxplayer_writeStdin('+'); 
+  pause(callback) { 
+//    this._omxplayer_writeStdin('p'); 
+    this._omxplayer_dbus_player.Pause(callback);
   }
 
-  volDown() { 
-    this._omxplayer_writeStdin('-'); 
+  getPlayStatus(callback) {
+    this._omxplayer_dbus_properties.Get(OMXPLAYER_DBUS_DESTINATION, "PlayStatus", callback);
   }
 
+  getVolume(callback) {
+    this._omxplayer_dbus_properties.Get(OMXPLAYER_DBUS_DESTINATION, "Volume", callback);
+  }
+
+  setVolume(volume, callback) {
+    this._omxplayer_dbus_properties.Set(OMXPLAYER_DBUS_DESTINATION, "Volume", volume, callback);
+  }
+
+  changeVolume(change, callback) {
+    this.getVolume(callback);
+  }
+
+  volUp(callback) { 
+//    this._omxplayer_writeStdin('+'); 
+    this.changeVolume(3 * 10^6, callback);
+  }
+        
+  volDown(callBack) { 
+//    this._omxplayer_writeStdin('-'); 
+    this.changeVolume(-3 * 10-6, callback);
+  }
+
+  /*
   fastFwd() { 
     this._omxplayer_writeStdin('>'); 
   }
 
   rewind() { 
     this._omxplayer_writeStdin('<'); 
+  }*/
+
+  seek(offset, callback) {
+    this._omxplayer_dbus_player.Seek(offset, callback);
   }
 
-  fwd30() { 
-    this._omxplayer_writeStdin('\u001b[C'); 
+  fwd30(callback) { 
+    this.seek(30 * 10^6, callback);
   }
 
-  back30() { 
-    this._omxplayer_writeStdin('\u001b[D'); 
+  back30(callback) { 
+    this.seek(-30 * 10^6, calback);
   }
 
-  fwd600() { 
-    this._omxplayer_writeStdin('\u001b[A'); 
+  fwd600(callback) { 
+//    this._omxplayer_writeStdin('\u001b[A'); 
+    this.seek(600 * 10^6, callback);
   }
 
-  back600() { 
-    this._omxplayer_writeStdin('\u001b[B'); 
+  back600(callback) { 
+//    this._omxplayer_writeStdin('\u001b[B'); 
+    this.seek(-600 * 10^6, callback);
   }
 
-  quit() { 
-    this._omxplayer_writeStdin('q'); 
+  quit(callback) { 
+//    this._omxplayer_writeStdin('q'); 
+    this._omxplayer_dbus_player.Quit(callback);
   }
 
-  subtitles() { 
-    this._omxplayer_writeStdin('s'); 
+  showSubtitles(callback) { 
+//    this._omxplayer_writeStdin('s'); 
+    this._omxplayer_dbus_player.ShowSubtitles(callback);
   }
 
+  hideSubtitles() { 
+//    this._omxplayer_writeStdin('s'); 
+    this._omxplayer_dbus_player.HideSubtitles(callback);
+  }
+
+
+  /*
   info() { 
     this._omxplayer_writeStdin('z'); 
+  }*/
+
+  getSpeed(callback) {
+    this._omxplayer_dbus_properties.Get(OMXPLAYER_DBUS_DESTINATION, "Rate", callback);
   }
 
+  setSpeed(speed, callback) {
+    this._omxplayer_dbus_properties.Set(OMXPLAYER_DBUS_DESTINATION, "Rate", speed, callback);
+  }
+
+  /*
   incSpeed() { 
     this._omxplayer_writeStdin('1'); 
   }
 
   decSpeed() { 
     this._omxplayer_writeStdin('2'); 
-  }
+  }*/
 
-  prevChapter() { 
-    this._omxplayer_writeStdin('i'); 
+  prevChapter(callback) { 
+//    this._omxplayer_writeStdin('i'); 
+    this._omxplayer_dbus_player.Previous(callback);
   }
 
   nextChapter() { 
-    this._omxplayer_writeStdin('o'); 
+//    this._omxplayer_writeStdin('o'); 
+    this._omxplayer_dbus_player.Skip(callback);
   }
 
+  /*
   prevAudio() { 
     this._omxplayer_writeStdin('j'); 
   }
@@ -158,7 +210,7 @@ class OMXPlayer extends EventEmitter {
 
   incSubDelay() { 
     this._omxplayer_writeStdin('f'); 
-  }
+  }*/
 
   get running() {
     return this._omxplayer_open;
@@ -178,13 +230,50 @@ class OMXPlayer extends EventEmitter {
     });
 
     this._omxplayer_player = omxProcess;
+    fs.exists(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE, (exists) => {
+      if (exists)
+        this._omxplayer_initialize_dbus();
+      else {
+        let watcher = fs.watch(OMXPLAYER_DBUS_ADDRESS_DIR, (eventType, fileName) => {
+          if (fileName == OMXPLAYER_DBUS_ADDRESS_FILE && eventType == "change") {
+            watcher.close();
+            this._omxplayer_initialize_dbus();
+          }
+        }); 
+      }
+    });
   }
 
+  _omxplayer_initialize_dbus() {
+    const sessionBus = dbus.sessionBus({
+      busAddress: fs.readFileSync(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE)
+    });
+
+    if (!sessionBus)
+      throw new Error("Could not connect to the DBus session bus.");
+
+    const service = sessionBus.getService(OMXPLAYER_DBUS_DESTINATION);
+    service.getInterface(OMXPLAYER_DBUS_PATH, OMXPLAYER_PROPERTIES_INTERFACE, (err, iface) => {
+      if (err)
+        throw new Error("Could not request properties interface");
+
+      this._omxplayer_dbus_properties = iface;
+    });
+    service.getInterface(OMXPLAYER_DBUS_PATH, OMXPLAYER_DBUS_PLAYER_INTERFACE, (err, iface) => { 
+      if (err) 
+        throw new Error("Could not request properties interface"); 
+      this._omxplayer_dbus_player = iface;
+    });
+  }
+ 
   _omxplayer_writeStdin(value) {
     if (this._omxplayer_open)
       this._omxplayer_player.stdin.write(value);
     else
       throw new Error('Player is closed.');
+
+
+        
   }
 
   _omxplayer_updateStatus() {
