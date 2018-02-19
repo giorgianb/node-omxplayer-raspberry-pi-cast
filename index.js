@@ -8,10 +8,10 @@ const username = require('username');
 const OMXPLAYER_DBUS_PATH = '/org/mpris/MediaPlayer2';
 const OMXPLAYER_DBUS_DESTINATION = 'org.mpris.MediaPlayer2.omxplayer';
 const OMXPLAYER_DBUS_PROPERTIES_INTERFACE = 'org.freedesktop.DBus.Properties';
-const OMXPLAYER_DBUS_PLAYER_INTERFACE = 'org.freedesktop.MediaPlayer2.Player';
+const OMXPLAYER_DBUS_PLAYER_INTERFACE = 'org.mpris.MediaPlayer2.Player';
 
 const OMXPLAYER_DBUS_ADDRESS_DIR = "/tmp/";
-const OMXPLAYER_DBUS_ADDRESS_FILE = "omxplayer." + username.sync();
+const OMXPLAYER_DBUS_ADDRESS_FILE = "omxplayerdbus." + username.sync();
 
 function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
   const ALLOWED_OUTPUTS = ['hdmi', 'local', 'both', 'alsa'];
@@ -73,17 +73,32 @@ class OMXPlayer extends EventEmitter {
   }
 
   play(callback) { 
-//    this._omxplayer_writeStdin('p'); 
-    this._omxplayer_dbus_player.Play(callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Play',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+
+
   }
 
   pause(callback) { 
-//    this._omxplayer_writeStdin('p'); 
-    this._omxplayer_dbus_player.Pause(callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Pause',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
-  getPlayStatus(callback) {
-    this._omxplayer_dbus_properties.Get(OMXPLAYER_DBUS_DESTINATION, "PlayStatus", callback);
+  getPlaybackStatus(callback) {
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'PlaybackStatus',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
   getVolume(callback) {
@@ -126,7 +141,7 @@ class OMXPlayer extends EventEmitter {
   }
 
   back30(callback) { 
-    this.seek(-30 * 10^6, calback);
+    this.seek(-30 * 10^6, callback);
   }
 
   fwd600(callback) { 
@@ -218,22 +233,24 @@ class OMXPlayer extends EventEmitter {
 
   /* Private Methods */
   _omxplayer_spawnPlayer(source, output, loop, initialVolume, showOsd) {
-    let args = buildArgs(src, out, loop, initialVolume, showOsd);
+    let args = buildArgs(source, output, loop, initialVolume, showOsd);
     let omxProcess = spawn('omxplayer', args);
     this._omxplayer_open = true;
 
     omxProcess.stdin.setEncoding('utf-8');
-    omxProcess.on('close', updateStatus);
+    omxProcess.once('close', this._omxplayer_updateStatus);
 
-    omxProcess.on('error', () => {
+    omxProcess.once('error', () => {
       this._omxplayer_emitError('Problem running omxplayer, is it installed?.');
     });
 
     this._omxplayer_player = omxProcess;
     fs.exists(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE, (exists) => {
-      if (exists)
+      if (exists) {
         this._omxplayer_initialize_dbus();
-      else {
+      } else {
+        // Add something to check if 500 milliseconds in case created between checking if
+        // it exists and watcher
         let watcher = fs.watch(OMXPLAYER_DBUS_ADDRESS_DIR, (eventType, fileName) => {
           if (fileName == OMXPLAYER_DBUS_ADDRESS_FILE && eventType == "change") {
             watcher.close();
@@ -246,24 +263,13 @@ class OMXPlayer extends EventEmitter {
 
   _omxplayer_initialize_dbus() {
     const sessionBus = dbus.sessionBus({
-      busAddress: fs.readFileSync(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE)
+      busAddress: String(fs.readFileSync(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE, 'ascii')).trim()
     });
 
     if (!sessionBus)
       throw new Error("Could not connect to the DBus session bus.");
 
-    const service = sessionBus.getService(OMXPLAYER_DBUS_DESTINATION);
-    service.getInterface(OMXPLAYER_DBUS_PATH, OMXPLAYER_PROPERTIES_INTERFACE, (err, iface) => {
-      if (err)
-        throw new Error("Could not request properties interface");
-
-      this._omxplayer_dbus_properties = iface;
-    });
-    service.getInterface(OMXPLAYER_DBUS_PATH, OMXPLAYER_DBUS_PLAYER_INTERFACE, (err, iface) => { 
-      if (err) 
-        throw new Error("Could not request properties interface"); 
-      this._omxplayer_dbus_player = iface;
-    });
+    this._omxplayer_dbus_session_bus = sessionBus;
   }
  
   _omxplayer_writeStdin(value) {
@@ -271,9 +277,6 @@ class OMXPlayer extends EventEmitter {
       this._omxplayer_player.stdin.write(value);
     else
       throw new Error('Player is closed.');
-
-
-        
   }
 
   _omxplayer_updateStatus() {
