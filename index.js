@@ -62,13 +62,13 @@ class OMXPlayer extends EventEmitter {
 
   /* Public Methods */
   newSource(src, out, loop, initialVolume, showOsd) {
-    if (this._omxplayer_open) {
+    if (this.running) {
       this._omxplayer_player.on('close', () => { 
         this._omxplayer_spawnPlayer(src, out, loop, initialVolume, showOsd); 
       });
 
       this._omxplayer_player.removeListener('close', this._omxplayer_updateStatus);
-      this._omxplayer_writeStdin('q');
+      this.quit();
     } else
       this._omxplayer_spawnPlayer(src, out, loop, initialVolume, showOsd);
   }
@@ -289,7 +289,6 @@ class OMXPlayer extends EventEmitter {
       body: [1],
       destination: OMXPLAYER_DBUS_DESTINATION
     }, callback);
-
   }
 
   nextAudio() { 
@@ -301,7 +300,6 @@ class OMXPlayer extends EventEmitter {
       body: [1],
       destination: OMXPLAYER_DBUS_DESTINATION
     }, callback);
-
   }
 
   previousSubtitle() { 
@@ -368,11 +366,17 @@ class OMXPlayer extends EventEmitter {
     this._omxplayer_open = true;
 
     omxProcess.stdin.setEncoding('utf-8');
-    omxProcess.once('close', this._omxplayer_updateStatus);
+    let self = this;
+    /* EventEmitter overwrites 'this' */
+    this._omxplayer_updateStatus = () => {
+      if (self.running) {
+        self._omxplayer_open = false
+        self.emit('close')
+      }
+    }
 
-    omxProcess.once('error', () => {
-      this._omxplayer_emitError('Problem running omxplayer, is it installed?.');
-    });
+    omxProcess.on('close', this._omxplayer_updateStatus);
+    omxProcess.on('error', this._omxplayer_updateStatus);
 
     this._omxplayer_player = omxProcess;
     const exists = fs.exists(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE, (exists) => {
@@ -412,23 +416,6 @@ class OMXPlayer extends EventEmitter {
 
     this._omxplayer_dbus_session_bus = sessionBus;
     this._omxplayer_dbus_ready = true;
-  }
- 
-  _omxplayer_writeStdin(value) {
-    if (this._omxplayer_open)
-      this._omxplayer_player.stdin.write(value);
-    else
-      throw new Error('Player is closed.');
-  }
-
-  _omxplayer_updateStatus() {
-    this._omxplayer_open = false
-    this.emit('close')
-  }
-
-  _omxplayer_emitError() {
-    this._omxplayer_open = false
-    this.emit('close')
   }
 }
 
