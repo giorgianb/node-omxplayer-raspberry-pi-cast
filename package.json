@@ -1,6 +1,6 @@
 {
   "name": "node-omxplayer-raspberry-pi-cast",
-  "version": "0.6.7",
+  "version": "0.7.0",
   "description": "Fork of node-omxplayer to provide finer grained control for casting.",
   "main": "index.js",
   "scripts": {
