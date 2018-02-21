@@ -1,5 +1,6 @@
 *.log
 *.DS_Store
 node_modules/
+test.mp4
 *.~
 *~

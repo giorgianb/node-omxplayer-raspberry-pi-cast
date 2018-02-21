@@ -54,6 +54,7 @@ class OMXPlayer extends EventEmitter {
     super();
     this._omxplayer_player = null;
     this._omxplayer_open = false;
+    this._omxplayer_dbus_ready = false;
 
     if (source)
       this._omxplayer_spawnPlayer(source, output, loop, initialVolume, showOsd);
@@ -79,8 +80,6 @@ class OMXPlayer extends EventEmitter {
       member: 'Play',
       destination: OMXPLAYER_DBUS_DESTINATION
     }, callback);
-
-
   }
 
   pause(callback) { 
@@ -102,130 +101,259 @@ class OMXPlayer extends EventEmitter {
   }
 
   getVolume(callback) {
-    this._omxplayer_dbus_properties.Get(OMXPLAYER_DBUS_DESTINATION, "Volume", callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'Volume',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
   setVolume(volume, callback) {
-    this._omxplayer_dbus_properties.Set(OMXPLAYER_DBUS_DESTINATION, "Volume", volume, callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'Volume',
+      signature: 'd',
+      body: [volume],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
   changeVolume(change, callback) {
-    this.getVolume(callback);
+    this.getVolume((err, res) => {
+      if (err)
+        callback(err, res);
+      this.setVolume(res + change, callback);
+    });
   }
 
-  volUp(callback) { 
-//    this._omxplayer_writeStdin('+'); 
-    this.changeVolume(3 * 10^6, callback);
+  increaseVolume(callback) { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [18],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
         
-  volDown(callBack) { 
-//    this._omxplayer_writeStdin('-'); 
-    this.changeVolume(-3 * 10-6, callback);
+  decreaseVolume(callback) { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [17],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
-  /*
-  fastFwd() { 
-    this._omxplayer_writeStdin('>'); 
+  fastForward() { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [4],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+
   }
 
   rewind() { 
-    this._omxplayer_writeStdin('<'); 
-  }*/
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [3],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+  }
 
   seek(offset, callback) {
-    this._omxplayer_dbus_player.Seek(offset, callback);
-  }
-
-  fwd30(callback) { 
-    this.seek(30 * 10^6, callback);
-  }
-
-  back30(callback) { 
-    this.seek(-30 * 10^6, callback);
-  }
-
-  fwd600(callback) { 
-//    this._omxplayer_writeStdin('\u001b[A'); 
-    this.seek(600 * 10^6, callback);
-  }
-
-  back600(callback) { 
-//    this._omxplayer_writeStdin('\u001b[B'); 
-    this.seek(-600 * 10^6, callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Seek',
+      signature: 'x',
+      body: [offset],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
   quit(callback) { 
-//    this._omxplayer_writeStdin('q'); 
-    this._omxplayer_dbus_player.Quit(callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [15],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
+  
   showSubtitles(callback) { 
-//    this._omxplayer_writeStdin('s'); 
-    this._omxplayer_dbus_player.ShowSubtitles(callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [31],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+
   }
 
   hideSubtitles() { 
-//    this._omxplayer_writeStdin('s'); 
-    this._omxplayer_dbus_player.HideSubtitles(callback);
-  }
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [30],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+  } 
 
-
-  /*
-  info() { 
-    this._omxplayer_writeStdin('z'); 
-  }*/
 
   getSpeed(callback) {
-    this._omxplayer_dbus_properties.Get(OMXPLAYER_DBUS_DESTINATION, "Rate", callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'Rate',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
   setSpeed(speed, callback) {
-    this._omxplayer_dbus_properties.Set(OMXPLAYER_DBUS_DESTINATION, "Rate", speed, callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'Rate',
+      signature: 'd',
+      body: [speed],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
-  /*
-  incSpeed() { 
-    this._omxplayer_writeStdin('1'); 
+  increaseSpeed() { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [2],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
-  decSpeed() { 
-    this._omxplayer_writeStdin('2'); 
-  }*/
+  decreaseSpeed() { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [1],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+  }
 
-  prevChapter(callback) { 
-//    this._omxplayer_writeStdin('i'); 
-    this._omxplayer_dbus_player.Previous(callback);
+  previousChapter(callback) { 
+     this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Previous',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
   nextChapter() { 
-//    this._omxplayer_writeStdin('o'); 
-    this._omxplayer_dbus_player.Skip(callback);
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Previous',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
   }
 
-  /*
-  prevAudio() { 
-    this._omxplayer_writeStdin('j'); 
+  previousAudio() { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [1],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+
   }
 
   nextAudio() { 
-    this._omxplayer_writeStdin('k'); 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [1],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+
   }
 
-  prevSubtitle() { 
-    this._omxplayer_writeStdin('n'); 
+  previousSubtitle() { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [10],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+
   }
 
   nextSubtitle() { 
-    this._omxplayer_writeStdin('m'); 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [11],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+
   }
 
-  decSubDelay() { 
-    this._omxplayer_writeStdin('d'); 
+  decreaseSubtitleDelay() { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [13],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+
   }
 
-  incSubDelay() { 
-    this._omxplayer_writeStdin('f'); 
-  }*/
+  increaseSubtitleDelay() { 
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'Action',
+      signature: 'i',
+      body: [14],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+  }
+
+  get ready() {
+    return this._omxplayer_dbus_ready;
+  }
 
   get running() {
     return this._omxplayer_open;
@@ -233,6 +361,8 @@ class OMXPlayer extends EventEmitter {
 
   /* Private Methods */
   _omxplayer_spawnPlayer(source, output, loop, initialVolume, showOsd) {
+    this._omxplayer_dbus_ready = false;
+
     let args = buildArgs(source, output, loop, initialVolume, showOsd);
     let omxProcess = spawn('omxplayer', args);
     this._omxplayer_open = true;
@@ -245,15 +375,26 @@ class OMXPlayer extends EventEmitter {
     });
 
     this._omxplayer_player = omxProcess;
-    fs.exists(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE, (exists) => {
+    const exists = fs.exists(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE, (exists) => {
       if (exists) {
         this._omxplayer_initialize_dbus();
       } else {
-        // Add something to check if 500 milliseconds in case created between checking if
-        // it exists and watcher
+        let closed = false;
+        // in case created between previous exists call and watcher intialization
+        setTimeout(() => {
+          if (fs.existsSync(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE) && !closed) {
+            if (!closed) {
+              watcher.close();
+              closed = true;
+              this._omxplayer_initialize_dbus();
+            }
+          }
+        }, 100);
+
         let watcher = fs.watch(OMXPLAYER_DBUS_ADDRESS_DIR, (eventType, fileName) => {
           if (fileName == OMXPLAYER_DBUS_ADDRESS_FILE && eventType == "change") {
             watcher.close();
+            closed = true;
             this._omxplayer_initialize_dbus();
           }
         }); 
@@ -270,6 +411,7 @@ class OMXPlayer extends EventEmitter {
       throw new Error("Could not connect to the DBus session bus.");
 
     this._omxplayer_dbus_session_bus = sessionBus;
+    this._omxplayer_dbus_ready = true;
   }
  
   _omxplayer_writeStdin(value) {
