@@ -150,6 +150,35 @@ class OMXPlayer extends EventEmitter {
     }, callback);
   }
 
+  getPosition(callback) {
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'Position',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+  }
+
+  setPosition(position, callback) {
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'Position',
+      signature: 'd',
+      body: [position],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+  }
+
+  getMetadata(callback) {
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'Metadata',
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+  }
+
   fastForward() { 
     this._omxplayer_dbus_session_bus.invoke({
       path: OMXPLAYER_DBUS_PATH,
