@@ -164,8 +164,8 @@ class OMXPlayer extends EventEmitter {
       path: OMXPLAYER_DBUS_PATH,
       interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
       member: 'Position',
-      signature: 'i',
-      body: [position],
+      signature: 'ox',
+      body: ['/not/used', position],
       destination: OMXPLAYER_DBUS_DESTINATION
     }, callback);
   }
