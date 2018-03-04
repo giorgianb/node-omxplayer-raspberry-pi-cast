@@ -19,7 +19,7 @@ const OMXPLAYER_DBUS_ADDRESS_FILE = "omxplayerdbus." + username.sync();
  * output,
  * loop,
  * initialVolume,
- * showOsd
+ * noOsd
  * } 
  * */
 
@@ -36,15 +36,11 @@ function buildArgs(opts) {
 	} else
 		output = 'local';
 
-	let osd = false;
-	if (opts.showOsd)
-		osd = opts.showOsd;
-
 	let args = [
     opts.source, 
     '-o',  output,
     '--blank', 
-    osd ? '' : '--no-osd', '',
+    opts.noOsd ? '--no-osd' : '',
     '--dbus_name', OMXPLAYER_DBUS_DESTINATION
   ];
 
