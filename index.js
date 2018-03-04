@@ -13,6 +13,15 @@ const OMXPLAYER_DBUS_PLAYER_INTERFACE = 'org.mpris.MediaPlayer2.Player';
 const OMXPLAYER_DBUS_ADDRESS_DIR = "/tmp/";
 const OMXPLAYER_DBUS_ADDRESS_FILE = "omxplayerdbus." + username.sync();
 
+/*
+ * args = {
+ * source,
+ * givenOutput,
+ * loop,
+ * initialVolume,
+ * showOsd
+ * }
+
 function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
   const ALLOWED_OUTPUTS = ['hdmi', 'local', 'both', 'alsa'];
 	let output = '';
