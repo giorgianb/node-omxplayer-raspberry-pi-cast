@@ -14,59 +14,60 @@ const OMXPLAYER_DBUS_ADDRESS_DIR = "/tmp/";
 const OMXPLAYER_DBUS_ADDRESS_FILE = "omxplayerdbus." + username.sync();
 
 /*
- * args = {
+ * opts = {
  * source,
- * givenOutput,
+ * output,
  * loop,
  * initialVolume,
  * showOsd
- * } */
+ * } 
+ * */
 
-function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
+function buildArgs(opts) {
   const ALLOWED_OUTPUTS = ['hdmi', 'local', 'both', 'alsa'];
 	let output = '';
 
-	if (givenOutput) {
-		if (ALLOWED_OUTPUTS.indexOf(givenOutput) === -1) 
-			throw new Error(`Output ${givenOutput} not allowed.`);
+	if (args.output) {
+		if (ALLOWED_OUTPUTS.indexOf(args.output) === -1) 
+			throw new Error(`Output ${args.output} not allowed.`);
 
-		output = givenOutput;
+		output = args.output;
 
 	} else
 		output = 'local';
 
 	let osd = false;
-	if (showOsd)
-		osd = showOsd;
+	if (opts.showOsd)
+		osd = opts.showOsd;
 
 	let args = [
-    source, 
+    opts.source, 
     '-o',  output,
     '--blank', 
     osd ? '' : '--no-osd', '',
     '--dbus_name', OMXPLAYER_DBUS_DESTINATION
   ];
 
-	// Handle the loop argument, if provided
-	if (loop)
+	// Handle the opts.loop argument, if provided
+	if (opts.loop)
 		args.push('--loop');
 
 	// Handle the initial volume argument, if provided
-	if (Number.isInteger(initialVolume))
-		args.push('--vol', initialVolume);
+	if (Number.isInteger(opts.initialVolume))
+		args.push('--vol', opts.initialVolume);
 
 	return args;
 }
 
 class OMXPlayer extends EventEmitter { 
-  constructor(source, output, loop, initialVolume, showOsd) {
+  constructor(opts) {
     super();
     this._omxplayer_player = null;
     this._omxplayer_open = false;
     this._omxplayer_dbus_ready = false;
 
-    if (source)
-      this._omxplayer_spawnPlayer(source, output, loop, initialVolume, showOsd);
+    if (opts.source)
+      this._omxplayer_spawnPlayer(opts);
   }
 
   /* Public Methods */
@@ -396,10 +397,10 @@ class OMXPlayer extends EventEmitter {
   }
 
   /* Private Methods */
-  _omxplayer_spawnPlayer(source, output, loop, initialVolume, showOsd) {
+  _omxplayer_spawnPlayer(opts) {
     this._omxplayer_dbus_ready = false;
 
-    let args = buildArgs(source, output, loop, initialVolume, showOsd);
+    let args = buildArgs(opts);
     let omxProcess = spawn('omxplayer', args);
     this._omxplayer_open = true;
 
