@@ -56,27 +56,27 @@ function buildArgs(opts) {
 }
 
 class OMXPlayer extends EventEmitter { 
-  constructor(opts) {
+  constructor(opts, callback) {
     super();
     this._omxplayer_player = null;
     this._omxplayer_open = false;
     this._omxplayer_dbus_ready = false;
 
     if (opts.source)
-      this._omxplayer_spawnPlayer(opts);
+      this._omxplayer_spawnPlayer(opts, callback);
   }
 
   /* Public Methods */
-  newSource(src, out, loop, initialVolume, showOsd) {
+  newSource(opts, callback) {
     if (this.running) {
       this._omxplayer_player.on('close', () => { 
-        this._omxplayer_spawnPlayer(src, out, loop, initialVolume, showOsd); 
+        this._omxplayer_spawnPlayer(opts, callback);
       });
 
       this._omxplayer_player.removeListener('close', this._omxplayer_updateStatus);
       this.quit();
     } else
-      this._omxplayer_spawnPlayer(src, out, loop, initialVolume, showOsd);
+      this._omxplayer_spawnPlayer(opts, callback);
   }
 
   play(callback) { 
@@ -152,6 +152,15 @@ class OMXPlayer extends EventEmitter {
       member: 'Action',
       signature: 'i',
       body: [17],
+      destination: OMXPLAYER_DBUS_DESTINATION
+    }, callback);
+  }
+
+  getDuration(callback) {
+    this._omxplayer_dbus_session_bus.invoke({
+      path: OMXPLAYER_DBUS_PATH,
+      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
+      member: 'Duration',
       destination: OMXPLAYER_DBUS_DESTINATION
     }, callback);
   }
@@ -393,7 +402,7 @@ class OMXPlayer extends EventEmitter {
   }
 
   /* Private Methods */
-  _omxplayer_spawnPlayer(opts) {
+  _omxplayer_spawnPlayer(opts, callback) {
     this._omxplayer_dbus_ready = false;
 
     let args = buildArgs(opts);
@@ -416,7 +425,7 @@ class OMXPlayer extends EventEmitter {
     this._omxplayer_player = omxProcess;
     const exists = fs.exists(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE, (exists) => {
       if (exists) {
-        this._omxplayer_initialize_dbus();
+        this._omxplayer_initialize_dbus(callback);
       } else {
         let closed = false;
         // in case created between previous exists call and watcher intialization
@@ -425,7 +434,7 @@ class OMXPlayer extends EventEmitter {
             if (!closed) {
               watcher.close();
               closed = true;
-              this._omxplayer_initialize_dbus();
+              this._omxplayer_initialize_dbus(callback);
             }
           }
         }, 100);
@@ -434,14 +443,14 @@ class OMXPlayer extends EventEmitter {
           if (fileName == OMXPLAYER_DBUS_ADDRESS_FILE && eventType == "change") {
             watcher.close();
             closed = true;
-            this._omxplayer_initialize_dbus();
+            this._omxplayer_initialize_dbus(callback);
           }
         }); 
       }
     });
   }
 
-  _omxplayer_initialize_dbus() {
+  _omxplayer_initialize_dbus(callback) {
     const sessionBus = dbus.sessionBus({
       busAddress: String(fs.readFileSync(OMXPLAYER_DBUS_ADDRESS_DIR + OMXPLAYER_DBUS_ADDRESS_FILE, 'ascii')).trim()
     });
@@ -451,6 +460,9 @@ class OMXPlayer extends EventEmitter {
 
     this._omxplayer_dbus_session_bus = sessionBus;
     this._omxplayer_dbus_ready = true;
+
+    if (callback)
+      setTimeout(callback, 500);
   }
 }
 
