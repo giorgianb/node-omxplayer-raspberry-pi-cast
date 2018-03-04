@@ -20,7 +20,7 @@ const OMXPLAYER_DBUS_ADDRESS_FILE = "omxplayerdbus." + username.sync();
  * loop,
  * initialVolume,
  * showOsd
- * }
+ * } */
 
 function buildArgs(source, givenOutput, loop, initialVolume, showOsd) {
   const ALLOWED_OUTPUTS = ['hdmi', 'local', 'both', 'alsa'];
