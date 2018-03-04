@@ -27,11 +27,11 @@ function buildArgs(opts) {
   const ALLOWED_OUTPUTS = ['hdmi', 'local', 'both', 'alsa'];
 	let output = '';
 
-	if (args.output) {
-		if (ALLOWED_OUTPUTS.indexOf(args.output) === -1) 
-			throw new Error(`Output ${args.output} not allowed.`);
+	if (opts.output) {
+		if (ALLOWED_OUTPUTS.indexOf(opts.output) === -1) 
+			throw new Error(`Output ${opts.output} not allowed.`);
 
-		output = args.output;
+		output = opts.output;
 
 	} else
 		output = 'local';
@@ -172,8 +172,8 @@ class OMXPlayer extends EventEmitter {
   setPosition(position, callback) {
     this._omxplayer_dbus_session_bus.invoke({
       path: OMXPLAYER_DBUS_PATH,
-      interface: OMXPLAYER_DBUS_PROPERTIES_INTERFACE,
-      member: 'Position',
+      interface: OMXPLAYER_DBUS_PLAYER_INTERFACE,
+      member: 'SetPosition',
       signature: 'ox',
       body: ['/not/used', position],
       destination: OMXPLAYER_DBUS_DESTINATION
