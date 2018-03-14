@@ -51,7 +51,7 @@ The constructor method, used to launch omxplayer with a source.
     **Warning**: As stated above, if you quit node before quitting the player, a zombie process may be created. If this occurs when the loop option is in place, the `omxplayer` process may run indefinitely.
 
 - `initialVolume` (optional): The initial volume, omxplayer will start with this value (in millibels). If left blank will default to 0.
-- `noOsd` (optional): If true, disables OMXPlayer's on-screen display.
+- `noOsd` (optional): If true, disables OMXPlayer's on-screen display. False by default.
 
 ### player.newSource({ *source: [source]*, *output: [output]*, *loop: [loop]*, *initalVolume: [initialVolume]*, *noOsd: [noOsd]* })
 
